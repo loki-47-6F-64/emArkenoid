@@ -2,16 +2,16 @@
 #include "../emAssert.h"
 #include "../emMalloc.h"
 
-node* binAllocNode( void *data, void *key ) {
-    node *tree = emMalloc( sizeof(node) );
+node* binAllocNode(void *data, void *key) {
+    node *tree = emMalloc(sizeof (node));
     tree->data = data;
     tree->key = key;
 
     tree->left = tree->right = 0;
 }
 
-ioTree* binAllocTree( int (*compare)(void*, void*)) {
-    ioTree *tree = emMalloc(sizeof(ioTree));
+ioTree* binAllocTree(int (*compare)(void*, void*)) {
+    ioTree *tree = emMalloc(sizeof (ioTree));
 
     tree->compare = compare;
     tree->root = 0;
@@ -21,14 +21,13 @@ int binCopies(ioTree *tree, void *key) {
     int result, x = -1;
     node *curr = tree->root;
 
-    while( curr ) {
-        result = tree->compare( key, curr->key );
+    while (curr) {
+        result = tree->compare(key, curr->key);
 
-        if( !result ) {
+        if (!result) {
             curr = curr->right;
             x++;
-        }
-        else if( result < 0 )
+        } else if (result < 0)
             curr = curr->left;
         else
             curr = curr->right;
@@ -38,46 +37,66 @@ int binCopies(ioTree *tree, void *key) {
 }
 
 int binInsert(ioTree* tree, void *data, void *key) {
-    if(!tree->root) {
-        tree->root = binAllocNode( data, key );
+    if (!tree->root) {
+        tree->root = binAllocNode(data, key);
         return 1;
     }
 
     int result = 0;
     node *parent, *curr = tree->root;
 
-    while( curr ) {
-        result = tree->compare( key, curr->key );
+    while (curr) {
+        result = tree->compare(key, curr->key);
 
         parent = curr;
-        if( !result )
+        if (!result)
             curr = curr->right;
-        else if( result < 0 )
+        else if (result < 0)
             curr = curr->left;
         else
             curr = curr->right;
     }
 
-    if( !result )
-        parent = binAllocNode( data, key );
-    else if( result < 0 )
-        parent->left = binAllocNode( data, key );
+
+    if (result < 0)
+        parent->left = binAllocNode(data, key);
     else
-        parent->right = binAllocNode( data, key );
+        parent->right = binAllocNode(data, key);
 
     return 1;
+}
+
+int binGetAll(ioTree *tree, void *key, void *buf, unsigned int sizeData, unsigned int sizeBuf) {
+    int result, x;
+
+    node *curr = tree->root;
+    x = 0;
+    while( curr && x < sizeBuf ) {
+        result = tree->compare(key, curr->key);
+
+        if (!result) {
+            emMemcpy(buf + x++*sizeData, curr->data, sizeData);
+            curr = curr->right;
+        }
+        else if (result < 0)
+            curr = curr->left;
+        else
+            curr = curr->right;
+    }
+
+    return x;
 }
 
 void* binGet(ioTree* tree, void* key) {
     int result;
     node *curr = tree->root;
 
-    while( curr ) {
-        result = tree->compare( key, curr->key );
+    while (curr) {
+        result = tree->compare(key, curr->key);
 
-        if( !result )
+        if (!result)
             return curr->data;
-        else if( result < 0 )
+        else if (result < 0)
             curr = curr->left;
         else
             curr = curr->right;
@@ -120,46 +139,61 @@ node *getSuccessor(node *parent, node *curr) {
     return curr;
 }
 
+// ======================================
+// Evil, not fully independent, but necessary.
+extern __inline int compContainer( void* dataKey, void* currKey );
+// ======================================
 int binRemove(ioTree* tree, void* key) {
-    int result;
-    node *parent, *curr = tree->root;
+    int result = 0;
 
-    while( curr ) {
-        result = tree->compare( key, curr->key );
+    // First detach node
+    node *parent = 0, *curr = tree->root;
+    while (curr) {
+        result = tree->compare(key, curr->key);
 
-        if( !result ) {
-            // If node is root
-
-
-            // If tree is a parent
-            if( curr->left || curr->right ) {
-                node *successor = getSuccessor( parent, curr );
-
-                curr->data = successor->data;
-                curr->key  = successor->key;
-
-                emFree(successor);
+        if (!result) {
+// ======================================
+            if(compContainer(curr->key, key)) {
+                curr = curr->right;
+                continue;
             }
-            else
-                emFree(tree);
+// ======================================
+            // If curr is a parent
+            if (curr->left || curr->right) {
+                if (!parent && !curr->right) {
+                    tree->root = curr->left;
+                } else {
+                    node *successor = getSuccessor(parent, curr);
+
+                    curr->data = successor->data;
+                    curr->key = successor->key;
+
+                    curr = successor;
+                }
+            } else if (parent) {
+                if (parent->left == curr) {
+                    parent->left = 0;
+                } else {
+                    parent->right = 0;
+                }
+            }
+            emFree(curr);
             break;
         }
         parent = curr;
 
-        if( result < 0 ) {
+        if (result < 0) {
             curr = curr->left;
-        }
-        else {
+        } else {
             curr = curr->right;
         }
     }
-
     // curr is non-zero if success
-    return (int)curr;
+    return (int) curr;
 }
 
-void binFree( node *subTree ) {
-    if( !subTree )
+void binFree(node *subTree) {
+    if (!subTree)
         return;
 
     binFree(subTree->left);
@@ -167,8 +201,9 @@ void binFree( node *subTree ) {
 
     emFree(subTree);
 }
-void binFreeTree( ioTree *tree ) {
-    if( !tree->root )
+
+void binFreeTree(ioTree *tree) {
+    if (!tree->root)
         return;
 
     binFree(tree->root->left);

@@ -31,6 +31,13 @@ node* binAllocNode( void *data, void *key );
 ioTree* binAllocTree( int (*compare)(void*, void*));
 
 void *binGet( ioTree *tree, void *key );
+
+// Puts all data in buf.
+// Returns number of data put in buf.
+// sizeData = size of data in bytes
+// sizeBuf = number of max elements in buffer
+int binGetAll(ioTree *tree, void *key, void *buf, unsigned int sizeData, unsigned int sizeBuf);
+
 int binInsert( ioTree *tree, void *data, void *key );
 
 int binRemove( ioTree *tree, void *key );

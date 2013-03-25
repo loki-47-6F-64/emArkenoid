@@ -24,7 +24,7 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 
 
 # Project Name
-PROJECTNAME=kem-starter
+PROJECTNAME=emArkenoid
 
 # Active Configuration
 DEFAULTCONF=default
