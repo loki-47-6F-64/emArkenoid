@@ -28,7 +28,7 @@ void delay_ms(unsigned int Time) {
 }
 
 int main(void) {
-    //char str[32];
+    char str[32];
     emInit();
 
     //emInit();
@@ -48,6 +48,8 @@ int main(void) {
     //assert( 1 != 1 );
     // Beware writeString will write directly to the display
     // the internal bitmap is not modified.
+
+    // while(1);
     //writeString(boldFont, 0x1, 0x3, "-PIC24JF64GB002-");
     //writeString(boldFont, 0x2, 0x3, "-Hit the buttons.");
     //writeString(boldFont, 0x3, 0x3, "-Muhahahaha >:)");
@@ -60,10 +62,10 @@ int main(void) {
     initTimer();
     //assert( 0 != 0 );
     while (1) {
-        delay_ms(20);
+        if(frameBuffer) {
+            frameBuffer = 0;
 
-        updateScreen(dogmBuffer, 0, 0, 8, 128);
-
-
+            updateScreen(dogmBuffer, 0, 0, 8, 128);
+        }
     };
 }

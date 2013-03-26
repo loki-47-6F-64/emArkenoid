@@ -67,7 +67,7 @@ void *emMalloc(size_t bytes) {
     }
 
     emSplit(block, chuncks);
-
+    
     return block + sizeof(memBlock);
 }
 

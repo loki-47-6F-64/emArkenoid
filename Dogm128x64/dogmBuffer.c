@@ -1,6 +1,7 @@
 #include "dogmBuffer.h"
 #include "../emAssert.h"
 unsigned char dogmBuffer[8][128];
+int frameBuffer;
 
 void initBuffer() {
     int rowCount = 0;
@@ -9,6 +10,8 @@ void initBuffer() {
         for (colCount = 0; colCount < 128; colCount++)
             dogmBuffer[rowCount][colCount] = 0x00;
     }
+
+    frameBuffer = 1;
 }
 
 __inline void setPixel(const int x, const int y) {

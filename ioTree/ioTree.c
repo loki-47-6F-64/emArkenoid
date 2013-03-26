@@ -66,6 +66,7 @@ int binInsert(ioTree* tree, void *data, void *key) {
     return 1;
 }
 
+// Put all pointers to data that match key in data
 int binGetAll(ioTree *tree, void *key, void *buf, unsigned int sizeData, unsigned int sizeBuf) {
     int result, x;
 
@@ -75,7 +76,9 @@ int binGetAll(ioTree *tree, void *key, void *buf, unsigned int sizeData, unsigne
         result = tree->compare(key, curr->key);
 
         if (!result) {
-            emMemcpy(buf + x++*sizeData, curr->data, sizeData);
+
+            // Copy pointers to data
+            emMemcpy(buf + x++*sizeData, &curr->data, sizeData);
             curr = curr->right;
         }
         else if (result < 0)

@@ -33,9 +33,29 @@ void __attribute__((interrupt, no_auto_psv)) _CNInterrupt(void) {
 void __attribute__((interrupt, no_auto_psv)) _T1Interrupt(void) {
     IFS0bits.T1IF = 0;
 
-    gameMain();
+    if(frameBuffer)
+        return;
+
     gameMain();
 
+    if(gameState.game_over) {
+        clearDisplay();
+
+        writeString(boldFont, 0x01, 0x03, "Game over...");
+        writeString(boldFont, 0x03, 0x03, "Muhahaha >:)");
+        while(1);
+    }
+    gameMain();
+
+    if(gameState.game_over) {
+        clearDisplay();
+
+        writeString(boldFont, 0x01, 0x03, "Game over...");
+        writeString(boldFont, 0x03, 0x03, "Muhahaha >:)");
+        while(1);
+    }
+    
+    frameBuffer = 1;
     //LATBbits.LATB14 = ~LATBbits.LATB14;
     //LATBbits.LATB15 = ~LATBbits.LATB15;
 }

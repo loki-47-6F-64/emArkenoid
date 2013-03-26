@@ -10,8 +10,9 @@
 
 #define clearBuffer initBuffer
 extern unsigned char dogmBuffer[8][128];
+extern int frameBuffer;
 
-void initBuffer();
+extern void initBuffer();
 
 __inline void setPixel(const int, const int);
 __inline void clearPixel(const int, const int);

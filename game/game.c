@@ -2,6 +2,7 @@
 #include "dogmBuffer.h"
 
 #include "../interrupts.h"
+#include "DogM.h"
 #include "../emMalloc.h"
 #include "../ioTree/ioTree.h"
 #include "../emAssert.h"
@@ -13,11 +14,14 @@ extern unsigned char ball[];
 extern unsigned int ball_width;
 extern unsigned int ball_height;
 
+#define MAX_DELAY_BALL 1
+struct _gameState gameState;
 
 Object *player;
 Ball *ball_p;
 
 // Used by ioTree
+
 int compare(void* dataKey, void* currKey) {
     CollPoint *data = (CollPoint*) dataKey;
     CollPoint *curr = (CollPoint*) currKey;
@@ -36,8 +40,9 @@ int compare(void* dataKey, void* currKey) {
 }
 
 // Used by ioTree
-__inline int compContainer( void* dataKey, void* currKey ) {
-    return ((CollPoint*)dataKey)->container !=  ((CollPoint*)currKey)->container;
+
+__inline int compContainer(void* dataKey, void* currKey) {
+    return ((CollPoint*) dataKey)->container != ((CollPoint*) currKey)->container;
 }
 
 //
@@ -52,9 +57,13 @@ void initCollpoints_brick(Object *brick) {
         colPoint[x].x = brick->origin.x + x;
         colPoint[x].y = brick->origin.y;
 
+        colPoint[x].type = BRICK_TOP;
+
         colPoint[x + brick->width].container = brick;
         colPoint[x + brick->width].x = brick->origin.x + x;
         colPoint[x + brick->width].y = brick->origin.y + brick->height - 1;
+
+        colPoint[x + brick->width].type = BRICK_TOP;
 
         binInsert(collTree, &colPoint[x], &colPoint[x]);
         binInsert(collTree, &colPoint[x + brick->width], &colPoint[x + brick->width]);
@@ -68,9 +77,58 @@ void initCollpoints_brick(Object *brick) {
         colPoint[x + y].x = brick->origin.x;
         colPoint[x + y].y = brick->origin.y + y + 1;
 
+        colPoint[x + y].type = BRICK_SIDE;
+
         colPoint[x + y + brick->height - 2].container = brick;
         colPoint[x + y + brick->height - 2].x = brick->origin.x + brick->width - 1;
         colPoint[x + y + brick->height - 2].y = brick->origin.y + y + 1;
+
+        colPoint[x + y + brick->height - 2].type = BRICK_SIDE;
+
+        binInsert(collTree, &colPoint[x + y], &colPoint[x + y]);
+        binInsert(collTree, &colPoint[x + y + brick->height - 2], &colPoint[x + y + brick->height - 2]);
+        y++;
+    }
+}
+
+void initCollpoints_player(Object *brick) {
+    int x;
+
+    CollPoint *colPoint = brick->collPoint;
+
+    for (x = 0; x < brick->width; x++) {
+        colPoint[x].container = brick;
+        colPoint[x].x = brick->origin.x + x;
+        colPoint[x].y = brick->origin.y;
+
+        colPoint[x].type = PLAYER;
+
+        colPoint[x + brick->width].container = brick;
+        colPoint[x + brick->width].x = brick->origin.x + x;
+        colPoint[x + brick->width].y = brick->origin.y + brick->height - 1;
+
+        colPoint[x + brick->width].type = PLAYER;
+
+        binInsert(collTree, &colPoint[x], &colPoint[x]);
+        binInsert(collTree, &colPoint[x + brick->width], &colPoint[x + brick->width]);
+    }
+
+    x = brick->width * 2;
+
+    int y = 0;
+    while (y < brick->height - 2) {
+        colPoint[x + y].container = brick;
+        colPoint[x + y].x = brick->origin.x;
+        colPoint[x + y].y = brick->origin.y + y + 1;
+
+        colPoint[x + y].type = PLAYER;
+
+
+        colPoint[x + y + brick->height - 2].container = brick;
+        colPoint[x + y + brick->height - 2].x = brick->origin.x + brick->width - 1;
+        colPoint[x + y + brick->height - 2].y = brick->origin.y + y + 1;
+
+        colPoint[x + y + brick->height - 2].type = PLAYER;
 
         binInsert(collTree, &colPoint[x + y], &colPoint[x + y]);
         binInsert(collTree, &colPoint[x + y + brick->height - 2], &colPoint[x + y + brick->height - 2]);
@@ -81,8 +139,8 @@ void initCollpoints_brick(Object *brick) {
 void initCollpoints_ball(Object *brick) {
     int x;
 
-    int middle_x = brick->width / 2;// + brick->width % 2;
-    int middle_y = brick->height / 2;// + brick->height % 2;
+    int middle_x = brick->width / 2; // + brick->width % 2;
+    int middle_y = brick->height / 2; // + brick->height % 2;
 
     CollPoint *collPoint = brick->collPoint;
     collPoint[0].x = brick->origin.x;
@@ -119,12 +177,29 @@ Object* allocBrick(int x, int y, int width, int height) {
     return brick;
 }
 
+Object* allocPlayer(int x, int y, int width, int height) {
+    Object *player = emMalloc(sizeof (Object));
+
+    player->height = height;
+    player->width = width;
+
+    player->origin.x = x;
+    player->origin.y = y;
+
+    player->collPoint = emMalloc(sizeof (CollPoint) * MAX_COLLPOINT_BUF(player));
+    //AssertFailed("0",5,"0");
+    initCollpoints_player(player);
+
+    return player;
+}
+
 void freeBrick(Object *brick) {
     int x, size = MAX_COLLPOINT_BUF(brick);
 
+    clearBrick(brick);
     // Remove collPoints from tree.
-    for(x = 0; x < size; x++) {
-        binRemove( collTree, &brick->collPoint[x] );
+    for (x = 0; x < size; x++) {
+        binRemove(collTree, &brick->collPoint[x]);
     }
 
     emFree(brick->collPoint);
@@ -135,7 +210,7 @@ Ball* allocBall(int x, int y, int width, int height, unsigned char *bitmap) {
     Ball *ball = emMalloc(sizeof (Ball));
 
     Object *brick = &(ball->base);
-    
+
     brick->origin.x = x;
     brick->origin.y = y;
 
@@ -156,18 +231,27 @@ void freeBall(Ball *ball) {
     Object *brick = &ball->base;
 
     // Remove collPoints from tree.
-    for(x = 0; x < size; x++) {
-        binRemove( collTree, &brick->collPoint[x] );
+    for (x = 0; x < size; x++) {
+        binRemove(collTree, &brick->collPoint[x]);
     }
 
     emFree(brick->collPoint);
     emFree(brick);
 }
 
-int collide(CollPoint *collPoint, unsigned int size) {
+CollPoint* collide(CollPoint *collPoint, unsigned int size) {
+    CollPoint * collPointBuf[10];
+
     unsigned int x;
     for (x = 0; x < size; x++) {
-        assert(binCopies(collTree, &collPoint[x]) <= 0);
+
+        // If collision
+        if (binGetAll(collTree, &collPoint[x], collPointBuf,
+                sizeof (CollPoint),
+                sizeof (collPointBuf) / sizeof (CollPoint*)) > 1) {
+            // Return other collisionPoint
+            return (collPointBuf[0]->type == collPoint->type) ? collPointBuf[1] : collPointBuf[0];
+        }
     }
 
     return 0;
@@ -176,13 +260,13 @@ int collide(CollPoint *collPoint, unsigned int size) {
 void loadBoundary() {
     // Generate boundaries
     int x;
-    for( x = 0; x < 128; x++ ) {
+    for (x = 0; x < 128; x++) {
         setPixel(x, 0);
         setPixel(x, 63);
     }
 
     int y;
-    for( y = 0; y < 64; y++) {
+    for (y = 0; y < 64; y++) {
         setPixel(0, y);
         setPixel(127, y);
     }
@@ -191,13 +275,13 @@ void loadBoundary() {
 void clearBoundary() {
     // Generate boundaries
     int x;
-    for( x = 0; x < 128; x++ ) {
+    for (x = 0; x < 128; x++) {
         clearPixel(x, 0);
         clearPixel(x, 64);
     }
 
     int y;
-    for( y = 0; y < 64; y++) {
+    for (y = 0; y < 64; y++) {
         clearPixel(0, y);
         clearPixel(127, y);
     }
@@ -257,10 +341,9 @@ void loadBall(Ball *ball) {
         setPixel(brick->collPoint[y].x, brick->collPoint[y].y);
     }
 #else
-    loadBitmap(ball->bitmap, columnL, rowL, brick->width, brick->height/ brick->width);
+    loadBitmap(ball->bitmap, columnL, rowL, brick->width, brick->height / brick->width);
 #endif
 }
-
 
 void clearBall(Ball *ball) {
     Object *brick = &ball->base;
@@ -274,11 +357,12 @@ void clearBall(Ball *ball) {
         clearPixel(brick->collPoint[y].x, brick->collPoint[y].y);
     }
 #else
-    clearBitmap(ball->bitmap, columnL, rowL, brick->width, brick->height/ brick->width);
+    clearBitmap(ball->bitmap, columnL, rowL, brick->width, brick->height / brick->width);
 #endif
 }
 
 // Moves collision points and updates collTree.
+
 void movePoints(CollPoint *p, unsigned int size, int x, int y) {
     int i;
 
@@ -342,17 +426,18 @@ void moveBall(Ball *ball) {
     Object *base = &ball->base;
 
     // Bitmap height == base->height / base->width
-    clearBitmap(ball->bitmap, base->origin.x, base->origin.y, base->width, base->height/base->width);
+    clearBitmap(ball->bitmap, base->origin.x, base->origin.y, base->width, base->height / base->width);
 
     base->origin.x += ball->direction.x;
     base->origin.y += ball->direction.y;
-    
+
     movePoints(base->collPoint, 4, ball->direction.x, ball->direction.y);
 
-    loadBitmap(ball->bitmap, base->origin.x, base->origin.y, base->width, base->height/base->width);
+    loadBitmap(ball->bitmap, base->origin.x, base->origin.y, base->width, base->height / base->width);
 }
 
 // Give a node a new key.
+
 void binReassign(ioTree* tree, void* currKey, void* newKey) {
     int result = 0;
 
@@ -366,6 +451,8 @@ void binReassign(ioTree* tree, void* currKey, void* newKey) {
             // If current point doesn't have the same container as currKey.
             if (curr->right &&
                     ((CollPoint*) curr->key)->container != ((CollPoint*) currKey)->container) {
+                assert(curr->right);
+
                 parent = curr;
                 curr = curr->right;
                 continue;
@@ -456,37 +543,84 @@ int gameMain() {
         moveLeft(player);
         // updateScreen(dogmBuffer, 0, 0, 8, 128);
     }
-    moveBall(ball_p);
+    if (!gameState.delay_ball--) {
+        moveBall(ball_p);
+        gameState.delay_ball = MAX_DELAY_BALL;
 
-    loadBoundary();
 
-    // If ball hit boundary
-    if (ball_p->base.origin.x + ball_p->base.width >= 128 ||
-            ball_p->base.origin.x <= 0)
-    {
-        ball_p->direction.x *= -1;
+
+        loadBoundary();
+
+        // If ball hit boundary
+        if (ball_p->base.origin.x + ball_p->base.width >= 128 ||
+                ball_p->base.origin.x <= 0) {
+            ball_p->direction.x *= -1;
+        }
+
+        if (ball_p->base.origin.y <= 0) {
+            ball_p->direction.y *= -1;
+        }
+        else if(ball_p->base.origin.y + ball_p->base.height >= 64) {
+            gameState.game_over = 1;
+            return;
+        }
+
+        // Check for collision with ball_p and any other object
+        CollPoint *collPoint = collide(ball_p->base.collPoint, 4);
+        if (collPoint) {
+            switch (collPoint->type) {
+                case PLAYER:
+                    ball_p->direction.y *= -1;
+
+                    break;
+                case BRICK_SIDE:
+                    ball_p->direction.x *= -1;
+
+                    freeBrick(collPoint->container);
+                    break;
+                case BRICK_TOP:
+                    ball_p->direction.y *= -1;
+
+                    freeBrick(collPoint->container);
+                    break;
+                default:
+                    assert(0);
+            }
+        }
     }
-
-    if (ball_p->base.origin.y + ball_p->base.height >= 64 ||
-            ball_p->base.origin.y <= 0)
-    {
-        ball_p->direction.y *= -1;
-    }
-
-    
+    return 0;
 }
 
 void initGame() {
+    gameState.game_over = 0;
+    gameState.delay_ball = MAX_DELAY_BALL;
+
     collTree = binAllocTree(compare);
 
     ball_p = allocBall(15, 15, ball_width, ball_width, ball);
-    player = allocBrick(50, 35, 10, 3);
+    player = allocPlayer(30, 52, 10, 3);
 
     ball_p->direction.x = 1;
     ball_p->direction.y = -1;
 
     loadBall(ball_p);
     loadBrick(player);
-    
+
+    clearDisplay();
+    char str[32];
+
+    loadBrick(allocBrick(50, 15, 10, 3));
+    loadBrick(allocBrick(70, 15, 10, 3));
+
+    loadBrick(allocBrick(0, 25, 10, 3));
+
+    loadBrick(allocBrick(50, 25, 10, 3));
+
+    loadBrick(allocBrick(50, 35, 10, 3));
+
+    loadBrick(allocBrick(100, 20, 10, 3));
+
+    loadBrick(allocBrick(100, 0, 10, 3));
+
     loadBoundary();
 }
