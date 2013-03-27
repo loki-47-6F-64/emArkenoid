@@ -62,10 +62,10 @@ int main(void) {
     initTimer();
     //assert( 0 != 0 );
     while (1) {
-        if(frameBuffer) {
-            frameBuffer = 0;
-
+        delay_ms(5);
+        if (frameBuffer) {
             updateScreen(dogmBuffer, 0, 0, 8, 128);
+            frameBuffer = 0;
         }
     };
 }

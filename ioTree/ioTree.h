@@ -8,17 +8,17 @@
 #ifndef IOTREE_H
 #define	IOTREE_H
 
-typedef struct node {
+typedef struct Node {
     void *data;
     void *key;
 
-    struct node* left;
-    struct node* right;
-} node;
+    struct Node* left;
+    struct Node* right;
+} Node;
 
 typedef struct ioTree {
     int (*compare)(void*, void*);
-    node *root;
+    Node *root;
 }ioTree;
 
 // Returns the number of copies of key.
@@ -27,7 +27,7 @@ int binCopies( ioTree*, void *key );
 
 void binFreeTree(ioTree *tree);
 
-node* binAllocNode( void *data, void *key );
+Node* binAllocNode( void *data, void *key );
 ioTree* binAllocTree( int (*compare)(void*, void*));
 
 void *binGet( ioTree *tree, void *key );
@@ -42,6 +42,6 @@ int binInsert( ioTree *tree, void *data, void *key );
 
 int binRemove( ioTree *tree, void *key );
 
-node *getSuccessor( node *parent, node *curr );
+Node *getSuccessor( Node *parent, Node *curr );
 #endif	/* IOTREE_H */
 

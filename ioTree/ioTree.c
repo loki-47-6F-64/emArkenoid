@@ -2,8 +2,22 @@
 #include "../emAssert.h"
 #include "../emMalloc.h"
 
-node* binAllocNode(void *data, void *key) {
-    node *tree = emMalloc(sizeof (node));
+/**
+ * Initialy, ioTree used emMalloc to allocate new memory.
+ * However, it uses to much extra space to keeps taps on all nodes seperately.
+ */
+
+// 22 Collpoints * Number of objects + 4 collPoints of ball.
+#define MAX_NODE 22*11+4
+
+Node node[MAX_NODE];
+Node *next;
+
+Node* binAllocNode(void *data, void *key) {
+    // Make sure next is within bounds of node array.
+    assert(next < node + MAX_NODE);
+
+    Node *tree = next++;
     tree->data = data;
     tree->key = key;
 
@@ -11,15 +25,28 @@ node* binAllocNode(void *data, void *key) {
 }
 
 ioTree* binAllocTree(int (*compare)(void*, void*)) {
+    // Initialize pointer to node.
+    next = node;
+    
     ioTree *tree = emMalloc(sizeof (ioTree));
 
     tree->compare = compare;
     tree->root = 0;
 }
 
+void binFree(Node *curr) {
+    assert(next > node);
+
+    while(curr < next) {
+        *curr = *(++curr);
+    }
+
+    next--;
+}
+
 int binCopies(ioTree *tree, void *key) {
     int result, x = -1;
-    node *curr = tree->root;
+    Node *curr = tree->root;
 
     while (curr) {
         result = tree->compare(key, curr->key);
@@ -43,7 +70,7 @@ int binInsert(ioTree* tree, void *data, void *key) {
     }
 
     int result = 0;
-    node *parent, *curr = tree->root;
+    Node *parent, *curr = tree->root;
 
     while (curr) {
         result = tree->compare(key, curr->key);
@@ -70,7 +97,7 @@ int binInsert(ioTree* tree, void *data, void *key) {
 int binGetAll(ioTree *tree, void *key, void *buf, unsigned int sizeData, unsigned int sizeBuf) {
     int result, x;
 
-    node *curr = tree->root;
+    Node *curr = tree->root;
     x = 0;
     while( curr && x < sizeBuf ) {
         result = tree->compare(key, curr->key);
@@ -92,7 +119,7 @@ int binGetAll(ioTree *tree, void *key, void *buf, unsigned int sizeData, unsigne
 
 void* binGet(ioTree* tree, void* key) {
     int result;
-    node *curr = tree->root;
+    Node *curr = tree->root;
 
     while (curr) {
         result = tree->compare(key, curr->key);
@@ -109,7 +136,7 @@ void* binGet(ioTree* tree, void* key) {
 }
 
 /* When a node to be freed is a parent, a successor must be found.*/
-node *getSuccessor(node *parent, node *curr) {
+Node *getSuccessor(Node *parent, Node *curr) {
     if (!curr->right) {
         // If curr is not root
         if (parent) {
@@ -150,7 +177,7 @@ int binRemove(ioTree* tree, void* key) {
     int result = 0;
 
     // First detach node
-    node *parent = 0, *curr = tree->root;
+    Node *parent = 0, *curr = tree->root;
     while (curr) {
         result = tree->compare(key, curr->key);
 
@@ -166,7 +193,7 @@ int binRemove(ioTree* tree, void* key) {
                 if (!parent && !curr->right) {
                     tree->root = curr->left;
                 } else {
-                    node *successor = getSuccessor(parent, curr);
+                    Node *successor = getSuccessor(parent, curr);
 
                     curr->data = successor->data;
                     curr->key = successor->key;
@@ -180,7 +207,7 @@ int binRemove(ioTree* tree, void* key) {
                     parent->right = 0;
                 }
             }
-            emFree(curr);
+            binFree(curr);
             break;
         }
         parent = curr;
@@ -195,23 +222,21 @@ int binRemove(ioTree* tree, void* key) {
     return (int) curr;
 }
 
-void binFree(node *subTree) {
+// Free subtree.
+void binFreeSubTree(Node *subTree) {
     if (!subTree)
         return;
 
-    binFree(subTree->left);
-    binFree(subTree->right);
+    binFreeSubTree(subTree->left);
+    binFreeSubTree(subTree->right);
 
-    emFree(subTree);
+    binFree(subTree);
 }
 
+// Free entire tree.
 void binFreeTree(ioTree *tree) {
-    if (!tree->root)
-        return;
-
-    binFree(tree->root->left);
-    binFree(tree->root->right);
-
     emFree(tree->root);
-    emFree(tree);
+
+    // reset tree.
+    next = node;
 }

@@ -49,74 +49,76 @@ __inline int compContainer(void* dataKey, void* currKey) {
 
 void initCollpoints_brick(Object *brick) {
     int x;
+    int middle_y = brick->height / 2 + brick->height %2;
 
     CollPoint *colPoint = brick->collPoint;
 
     for (x = 0; x < brick->width; x++) {
         colPoint[x].container = brick;
         colPoint[x].x = brick->origin.x + x;
-        colPoint[x].y = brick->origin.y;
+        colPoint[x].y = brick->origin.y + middle_y;
 
         colPoint[x].type = BRICK_TOP;
-
+/*
         colPoint[x + brick->width].container = brick;
         colPoint[x + brick->width].x = brick->origin.x + x;
         colPoint[x + brick->width].y = brick->origin.y + brick->height - 1;
 
         colPoint[x + brick->width].type = BRICK_TOP;
-
+*/
         binInsert(collTree, &colPoint[x], &colPoint[x]);
-        binInsert(collTree, &colPoint[x + brick->width], &colPoint[x + brick->width]);
+//        binInsert(collTree, &colPoint[x + brick->width], &colPoint[x + brick->width]);
     }
 
-    x = brick->width * 2;
+    x = brick->width;
 
     int y = 0;
-    while (y < brick->height - 2) {
+    while (y < brick->height) {
         colPoint[x + y].container = brick;
         colPoint[x + y].x = brick->origin.x;
         colPoint[x + y].y = brick->origin.y + y + 1;
 
         colPoint[x + y].type = BRICK_SIDE;
 
-        colPoint[x + y + brick->height - 2].container = brick;
-        colPoint[x + y + brick->height - 2].x = brick->origin.x + brick->width - 1;
-        colPoint[x + y + brick->height - 2].y = brick->origin.y + y + 1;
+        colPoint[x + y + brick->height].container = brick;
+        colPoint[x + y + brick->height].x = brick->origin.x + brick->width - 1;
+        colPoint[x + y + brick->height].y = brick->origin.y + y + 1;
 
-        colPoint[x + y + brick->height - 2].type = BRICK_SIDE;
+        colPoint[x + y + brick->height].type = BRICK_SIDE;
 
         binInsert(collTree, &colPoint[x + y], &colPoint[x + y]);
-        binInsert(collTree, &colPoint[x + y + brick->height - 2], &colPoint[x + y + brick->height - 2]);
+        binInsert(collTree, &colPoint[x + y + brick->height], &colPoint[x + y + brick->height]);
         y++;
     }
 }
 
 void initCollpoints_player(Object *brick) {
     int x;
+    int middle_y = brick->height / 2 + brick->height %2;
 
     CollPoint *colPoint = brick->collPoint;
 
     for (x = 0; x < brick->width; x++) {
         colPoint[x].container = brick;
         colPoint[x].x = brick->origin.x + x;
-        colPoint[x].y = brick->origin.y;
+        colPoint[x].y = brick->origin.y + middle_y;
 
         colPoint[x].type = PLAYER;
-
+/*
         colPoint[x + brick->width].container = brick;
         colPoint[x + brick->width].x = brick->origin.x + x;
         colPoint[x + brick->width].y = brick->origin.y + brick->height - 1;
 
         colPoint[x + brick->width].type = PLAYER;
-
+*/
         binInsert(collTree, &colPoint[x], &colPoint[x]);
-        binInsert(collTree, &colPoint[x + brick->width], &colPoint[x + brick->width]);
+//        binInsert(collTree, &colPoint[x + brick->width], &colPoint[x + brick->width]);
     }
 
-    x = brick->width * 2;
+    x = brick->width;
 
     int y = 0;
-    while (y < brick->height - 2) {
+    while (y < brick->height) {
         colPoint[x + y].container = brick;
         colPoint[x + y].x = brick->origin.x;
         colPoint[x + y].y = brick->origin.y + y + 1;
@@ -124,14 +126,14 @@ void initCollpoints_player(Object *brick) {
         colPoint[x + y].type = PLAYER;
 
 
-        colPoint[x + y + brick->height - 2].container = brick;
-        colPoint[x + y + brick->height - 2].x = brick->origin.x + brick->width - 1;
-        colPoint[x + y + brick->height - 2].y = brick->origin.y + y + 1;
+        colPoint[x + y + brick->height].container = brick;
+        colPoint[x + y + brick->height].x = brick->origin.x + brick->width - 1;
+        colPoint[x + y + brick->height].y = brick->origin.y + y + 1;
 
-        colPoint[x + y + brick->height - 2].type = PLAYER;
+        colPoint[x + y + brick->height].type = PLAYER;
 
         binInsert(collTree, &colPoint[x + y], &colPoint[x + y]);
-        binInsert(collTree, &colPoint[x + y + brick->height - 2], &colPoint[x + y + brick->height - 2]);
+        binInsert(collTree, &colPoint[x + y + brick->height], &colPoint[x + y + brick->height]);
         y++;
     }
 }
@@ -442,7 +444,7 @@ void binReassign(ioTree* tree, void* currKey, void* newKey) {
     int result = 0;
 
     // First detach node
-    node *parent = 0, *curr = tree->root;
+    Node *parent = 0, *curr = tree->root;
     while (curr) {
         result = tree->compare(currKey, curr->key);
 
@@ -465,7 +467,7 @@ void binReassign(ioTree* tree, void* currKey, void* newKey) {
                 if (!parent && !curr->right) {
                     tree->root = curr->left;
                 } else {
-                    node *successor = getSuccessor(parent, curr);
+                    Node *successor = getSuccessor(parent, curr);
 
                     curr->data = successor->data;
                     curr->key = successor->key;
@@ -510,7 +512,7 @@ void binReassign(ioTree* tree, void* currKey, void* newKey) {
     assert(!result);
     assert(curr);
     // Reattach Node
-    node *child = curr;
+    Node *child = curr;
 
     curr = tree->root;
     while (curr) {
@@ -591,12 +593,7 @@ int gameMain() {
     return 0;
 }
 
-void initGame() {
-    gameState.game_over = 0;
-    gameState.delay_ball = MAX_DELAY_BALL;
-
-    collTree = binAllocTree(compare);
-
+initMap() {
     ball_p = allocBall(15, 15, ball_width, ball_width, ball);
     player = allocPlayer(30, 52, 10, 3);
 
@@ -606,21 +603,19 @@ void initGame() {
     loadBall(ball_p);
     loadBrick(player);
 
-    clearDisplay();
-    char str[32];
-
-    loadBrick(allocBrick(50, 15, 10, 3));
-    loadBrick(allocBrick(70, 15, 10, 3));
-
-    loadBrick(allocBrick(0, 25, 10, 3));
-
-    loadBrick(allocBrick(50, 25, 10, 3));
-
-    loadBrick(allocBrick(50, 35, 10, 3));
-
-    loadBrick(allocBrick(100, 20, 10, 3));
-
-    loadBrick(allocBrick(100, 0, 10, 3));
-
+    int x;
+    for(x = 0; x < 10; x++) {
+        loadBrick(allocBrick(x*5 + 30, (x%2)*4 + 10, 10, 3));
+    }
     loadBoundary();
+}
+void initGame() {
+    gameState.game_over = 0;
+    gameState.delay_ball = MAX_DELAY_BALL;
+
+    collTree = binAllocTree(compare);
+
+    clearDisplay();
+
+    initMap();
 }

@@ -12,7 +12,7 @@
 #define NULL 0
 
 #define CHUNCK_SIZE sizeof(memBlock)
-#define MAX_CHUNCKS 1024
+#define MAX_CHUNCKS 575
 #define MAX_MEMORY (CHUNCK_SIZE*MAX_CHUNCKS)
 
 #define HIGH_BIT( x ) (1 << (sizeof(x)*8 - 1))

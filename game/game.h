@@ -8,10 +8,10 @@
 #ifndef GAME_H
 #define	GAME_H
 
-// #define _DEBUG_COLLISION
+//#define _DEBUG_COLLISION
 
 // Used often. Macro it for clarity
-#define MAX_COLLPOINT_BUF( brick ) ((brick->width+(brick->height - 2))*2)
+#define MAX_COLLPOINT_BUF( brick ) (brick->width+(brick->height)*2)
 
 /* The engine of the game.
  * Handle Movement, Collision detection and Graphics.
