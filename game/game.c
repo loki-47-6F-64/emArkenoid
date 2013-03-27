@@ -26,14 +26,14 @@ int compare(void* dataKey, void* currKey) {
     CollPoint *data = (CollPoint*) dataKey;
     CollPoint *curr = (CollPoint*) currKey;
 
-    if (data->x < curr->x)
-        return -1;
-    else if (data->x > curr->x)
-        return 1;
-
-    else if (data->y < curr->y)
+    if (data->y < curr->y)
         return -1;
     else if (data->y > curr->y)
+        return 1;
+    
+    else if (data->x < curr->x)
+        return -1;
+    else if (data->x > curr->x)
         return 1;
 
     return 0;
