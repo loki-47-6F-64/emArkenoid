@@ -36,6 +36,9 @@ struct Object;
 struct _gameState {
     int game_over;
 
+    // The amount of bricks currently in-game
+    int bricks_left;
+
     // Max delays of ball
     int delay_ball_x;
     int delay_ball_y;
@@ -93,6 +96,6 @@ void moveRight(Object*);
 
 void moveBall(Ball*);
 
-
+int isGameOver();
 #endif	/* GAME_H */
 

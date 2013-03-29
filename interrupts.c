@@ -39,24 +39,13 @@ void __attribute__((interrupt, no_auto_psv)) _T1Interrupt(void) {
 
     gameMain();
 
-    if(gameState.game_over) {
-        clearDisplay();
-
-        writeString(boldFont, 0x01, 0x03, "Game over...");
-        writeString(boldFont, 0x03, 0x03, "Muhahaha >:)");
+    if(isGameOver())
         while(1);
-    }
+        
     gameMain();
 
-    if(gameState.game_over) {
-        clearDisplay();
-
-        writeString(boldFont, 0x01, 0x03, "Game over...");
-        writeString(boldFont, 0x03, 0x03, "Muhahaha >:)");
+    if(isGameOver())
         while(1);
-    }
-
+    
     frameBuffer++;
-    //LATBbits.LATB14 = ~LATBbits.LATB14;
-    //LATBbits.LATB15 = ~LATBbits.LATB15;
 }

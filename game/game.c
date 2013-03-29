@@ -63,6 +63,8 @@ void freeBrick(Object *brick) {
 
     emFree(brick->collPoint);
     emFree(brick);
+
+    gameState.bricks_left--;
 }
 
 Ball* allocBall(int x, int y, int width, int height, unsigned char *bitmap) {
@@ -328,6 +330,26 @@ int gameMain() {
     return 0;
 }
 
+int isGameOver() {
+    if(gameState.game_over) {
+        clearDisplay();
+
+        writeString(boldFont, 0x01, 0x03, "Game over...");
+        writeString(boldFont, 0x03, 0x03, "Muhahaha >:)");
+        return 1;
+    }
+    else if(!gameState.bricks_left) {
+        clearDisplay();
+
+        writeString(boldFont, 0x01, 0x03, "Nooooo!");
+        writeString(boldFont, 0x03, 0x03, "How dare you!");
+        writeString(boldFont, 0x04, 0x03, "You will pay for this. >:/");
+        return 1;
+    }
+
+    return 0;
+}
+
 initMap() {
     ball_p = allocBall(15, 15, ball_width, ball_width, ball);
     player = allocPlayer(30, 52, 16, 3);
@@ -336,14 +358,17 @@ initMap() {
     loadBrick(player);
 
     int x;
-    for (x = 0; x < 10; x++) {
+    for (x = 0; x < 13; x++) {
         loadBrick(allocBrick(x * 5 + 30, (x % 2)*4 + 10, 10, 3));
+        gameState.bricks_left++;
     }
     loadBoundary();
 }
 
 void initGame() {
     gameState.game_over = 0;
+    gameState.bricks_left = 0;
+
     gameState.delay_ball_x = DELAY_SLOW_X;
     gameState.delay_ball_y = DELAY_SLOW_Y;
 
