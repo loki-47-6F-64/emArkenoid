@@ -26,10 +26,19 @@ typedef enum ObjType {
 
 struct Object;
 
+// Ball delay
+#define DELAY_FAST_X 0
+#define DELAY_SLOW_X 1
+
+#define DELAY_FAST_Y 0
+#define DELAY_SLOW_Y 1
 // State of current game.
 struct _gameState {
     int game_over;
-    int delay_ball;
+
+    // Max delays of ball
+    int delay_ball_x;
+    int delay_ball_y;
 };
 
 extern struct _gameState gameState;
@@ -60,9 +69,9 @@ typedef struct Object {
 typedef struct Ball {
     // Emulate inheritence
     Object base;
-    Point direction;
+    Point delay;
 
-    int speed;
+    Point direction;
 
     unsigned char *bitmap;
 } Ball;

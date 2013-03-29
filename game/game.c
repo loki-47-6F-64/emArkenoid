@@ -14,7 +14,6 @@ extern unsigned char ball[];
 extern unsigned int ball_width;
 extern unsigned int ball_height;
 
-#define MAX_DELAY_BALL 1
 struct _gameState gameState;
 
 Object *player;
@@ -30,7 +29,7 @@ int compare(void* dataKey, void* currKey) {
         return -1;
     else if (data->y > curr->y)
         return 1;
-    
+
     else if (data->x < curr->x)
         return -1;
     else if (data->x > curr->x)
@@ -49,7 +48,7 @@ __inline int compContainer(void* dataKey, void* currKey) {
 
 void initCollpoints_brick(Object *brick) {
     int x;
-    int middle_y = brick->height / 2 + brick->height %2;
+    int middle_y = brick->height / 2 + brick->height % 2;
 
     CollPoint *colPoint = brick->collPoint;
 
@@ -59,15 +58,8 @@ void initCollpoints_brick(Object *brick) {
         colPoint[x].y = brick->origin.y + middle_y;
 
         colPoint[x].type = BRICK_TOP;
-/*
-        colPoint[x + brick->width].container = brick;
-        colPoint[x + brick->width].x = brick->origin.x + x;
-        colPoint[x + brick->width].y = brick->origin.y + brick->height - 1;
 
-        colPoint[x + brick->width].type = BRICK_TOP;
-*/
         binInsert(collTree, &colPoint[x], &colPoint[x]);
-//        binInsert(collTree, &colPoint[x + brick->width], &colPoint[x + brick->width]);
     }
 
     x = brick->width;
@@ -94,7 +86,7 @@ void initCollpoints_brick(Object *brick) {
 
 void initCollpoints_player(Object *brick) {
     int x;
-    int middle_y = brick->height / 2 + brick->height %2;
+    int middle_y = brick->height / 2 + brick->height % 2;
 
     CollPoint *colPoint = brick->collPoint;
 
@@ -104,15 +96,8 @@ void initCollpoints_player(Object *brick) {
         colPoint[x].y = brick->origin.y + middle_y;
 
         colPoint[x].type = PLAYER;
-/*
-        colPoint[x + brick->width].container = brick;
-        colPoint[x + brick->width].x = brick->origin.x + x;
-        colPoint[x + brick->width].y = brick->origin.y + brick->height - 1;
 
-        colPoint[x + brick->width].type = PLAYER;
-*/
         binInsert(collTree, &colPoint[x], &colPoint[x]);
-//        binInsert(collTree, &colPoint[x + brick->width], &colPoint[x + brick->width]);
     }
 
     x = brick->width;
@@ -173,7 +158,7 @@ Object* allocBrick(int x, int y, int width, int height) {
     brick->origin.y = y;
 
     brick->collPoint = emMalloc(sizeof (CollPoint) * MAX_COLLPOINT_BUF(brick));
-    //AssertFailed("0",5,"0");
+
     initCollpoints_brick(brick);
 
     return brick;
@@ -189,7 +174,7 @@ Object* allocPlayer(int x, int y, int width, int height) {
     player->origin.y = y;
 
     player->collPoint = emMalloc(sizeof (CollPoint) * MAX_COLLPOINT_BUF(player));
-    //AssertFailed("0",5,"0");
+    
     initCollpoints_player(player);
 
     return player;
@@ -222,7 +207,12 @@ Ball* allocBall(int x, int y, int width, int height, unsigned char *bitmap) {
 
     initCollpoints_ball(brick);
     ball->bitmap = bitmap;
-    ball->speed = 1;
+
+    ball->delay.x = gameState.delay_ball_x;
+    ball->delay.y = gameState.delay_ball_y;
+
+    ball->direction.x = 1;
+    ball->direction.y = 1;
 
     return ball;
 }
@@ -430,10 +420,12 @@ void moveBall(Ball *ball) {
     // Bitmap height == base->height / base->width
     clearBitmap(ball->bitmap, base->origin.x, base->origin.y, base->width, base->height / base->width);
 
-    base->origin.x += ball->direction.x;
-    base->origin.y += ball->direction.y;
+    base->origin.x += ball->delay.x ? 0 : ball->direction.x;
+    base->origin.y += ball->delay.y ? 0 : ball->direction.y;
 
-    movePoints(base->collPoint, 4, ball->direction.x, ball->direction.y);
+    movePoints(base->collPoint, 4,
+            ball->delay.x ? 0 : ball->direction.x,
+            ball->delay.y ? 0 : ball->direction.y);
 
     loadBitmap(ball->bitmap, base->origin.x, base->origin.y, base->width, base->height / base->width);
 }
@@ -534,6 +526,76 @@ void binReassign(ioTree* tree, void* currKey, void* newKey) {
         parent->right = child;
 }
 
+void changeDelay(Ball *ball) {    
+    int playerL = player->width / 4;
+    int playerR = player->width - player->width / 4;
+
+    int ball_x = ball->base.origin.x - player->origin.x;;
+
+    if(ball_x < playerL) {
+        gameState.delay_ball_x = DELAY_FAST_X;
+        gameState.delay_ball_y = DELAY_SLOW_Y;
+
+        ball->direction.x = -1;
+    }
+    else if(ball_x > playerR) {
+        gameState.delay_ball_x = DELAY_FAST_X;
+        gameState.delay_ball_y = DELAY_SLOW_Y;
+
+        ball->direction.x = 1;
+    }
+    else {
+        gameState.delay_ball_x = DELAY_SLOW_X;
+        gameState.delay_ball_y = DELAY_FAST_Y;
+    }
+
+    ball->direction.y = -1;
+}
+
+void handleCollision(Ball *ball) {
+    // If ball hit boundary
+    if (!ball->delay.x &&
+            (ball->base.origin.x + ball_p->base.width >= 128 ||
+            ball->base.origin.x <= 0))
+    {
+        ball->direction.x *= -1;
+    }
+
+    if (!ball->delay.y && 
+            (ball->base.origin.y <= 0))
+    {
+        ball->direction.y *= -1;
+    } else if (ball->base.origin.y + ball_p->base.height >= 64) {
+        gameState.game_over = 1;
+        return;
+    }
+
+    // Check for collision with ball_p and any other object
+    CollPoint *collPoint = collide(ball_p->base.collPoint, 4);
+    if (collPoint) {
+        switch (collPoint->type) {
+            case PLAYER:
+                // If ball is not moved on its y axis, it could hit the player two times.
+                if(!ball->delay.y) {
+                    changeDelay(ball);
+                }
+                break;
+            case BRICK_SIDE:
+                ball->direction.x *= -1;
+
+                freeBrick(collPoint->container);
+                break;
+            case BRICK_TOP:
+                ball->direction.y *= -1;
+
+                freeBrick(collPoint->container);
+                break;
+            default:
+                assert(0);
+        }
+    }
+}
+
 int gameMain() {
     if (button.right) {
         //assert(1 - 1);
@@ -545,73 +607,49 @@ int gameMain() {
         moveLeft(player);
         // updateScreen(dogmBuffer, 0, 0, 8, 128);
     }
-    if (!gameState.delay_ball--) {
+    if (!ball_p->delay.x || !ball_p->delay.y) {
+
         moveBall(ball_p);
-        gameState.delay_ball = MAX_DELAY_BALL;
-
-
 
         loadBoundary();
 
-        // If ball hit boundary
-        if (ball_p->base.origin.x + ball_p->base.width >= 128 ||
-                ball_p->base.origin.x <= 0) {
-            ball_p->direction.x *= -1;
-        }
-
-        if (ball_p->base.origin.y <= 0) {
-            ball_p->direction.y *= -1;
-        }
-        else if(ball_p->base.origin.y + ball_p->base.height >= 64) {
-            gameState.game_over = 1;
-            return;
-        }
-
-        // Check for collision with ball_p and any other object
-        CollPoint *collPoint = collide(ball_p->base.collPoint, 4);
-        if (collPoint) {
-            switch (collPoint->type) {
-                case PLAYER:
-                    ball_p->direction.y *= -1;
-
-                    break;
-                case BRICK_SIDE:
-                    ball_p->direction.x *= -1;
-
-                    freeBrick(collPoint->container);
-                    break;
-                case BRICK_TOP:
-                    ball_p->direction.y *= -1;
-
-                    freeBrick(collPoint->container);
-                    break;
-                default:
-                    assert(0);
-            }
-        }
+        // Check for collision and act accordenly.
+        handleCollision(ball_p);
     }
+
+    if (!ball_p->delay.x) {
+        ball_p->delay.x = gameState.delay_ball_x;
+    } else {
+        ball_p->delay.x--;
+    }
+
+    if (!ball_p->delay.y) {
+        ball_p->delay.y = gameState.delay_ball_y;
+    } else {
+        ball_p->delay.y--;
+    }
+
     return 0;
 }
 
 initMap() {
     ball_p = allocBall(15, 15, ball_width, ball_width, ball);
-    player = allocPlayer(30, 52, 10, 3);
-
-    ball_p->direction.x = 1;
-    ball_p->direction.y = -1;
+    player = allocPlayer(30, 52, 16, 3);
 
     loadBall(ball_p);
     loadBrick(player);
 
     int x;
-    for(x = 0; x < 10; x++) {
-        loadBrick(allocBrick(x*5 + 30, (x%2)*4 + 10, 10, 3));
+    for (x = 0; x < 10; x++) {
+        loadBrick(allocBrick(x * 5 + 30, (x % 2)*4 + 10, 10, 3));
     }
     loadBoundary();
 }
+
 void initGame() {
     gameState.game_over = 0;
-    gameState.delay_ball = MAX_DELAY_BALL;
+    gameState.delay_ball_x = DELAY_SLOW_X;
+    gameState.delay_ball_y = DELAY_SLOW_Y;
 
     collTree = binAllocTree(compare);
 
