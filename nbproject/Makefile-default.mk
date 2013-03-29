@@ -45,11 +45,11 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/Dogm128x64/bitmap/ball.o ${OBJECTDIR}/Dogm128x64/BoldFont.o ${OBJECTDIR}/Dogm128x64/dogm.o ${OBJECTDIR}/Dogm128x64/dogmBuffer.o ${OBJECTDIR}/game/game.o ${OBJECTDIR}/ioTree/ioTree.o ${OBJECTDIR}/configuration_bits.o ${OBJECTDIR}/interrupts.o ${OBJECTDIR}/main.o ${OBJECTDIR}/system.o ${OBJECTDIR}/traps.o ${OBJECTDIR}/user.o ${OBJECTDIR}/emMalloc.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/Dogm128x64/bitmap/ball.o.d ${OBJECTDIR}/Dogm128x64/BoldFont.o.d ${OBJECTDIR}/Dogm128x64/dogm.o.d ${OBJECTDIR}/Dogm128x64/dogmBuffer.o.d ${OBJECTDIR}/game/game.o.d ${OBJECTDIR}/ioTree/ioTree.o.d ${OBJECTDIR}/configuration_bits.o.d ${OBJECTDIR}/interrupts.o.d ${OBJECTDIR}/main.o.d ${OBJECTDIR}/system.o.d ${OBJECTDIR}/traps.o.d ${OBJECTDIR}/user.o.d ${OBJECTDIR}/emMalloc.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/Dogm128x64/bitmap/ball.o ${OBJECTDIR}/Dogm128x64/BoldFont.o ${OBJECTDIR}/Dogm128x64/dogm.o ${OBJECTDIR}/Dogm128x64/dogmBuffer.o ${OBJECTDIR}/game/game.o ${OBJECTDIR}/ioTree/ioTree.o ${OBJECTDIR}/configuration_bits.o ${OBJECTDIR}/interrupts.o ${OBJECTDIR}/main.o ${OBJECTDIR}/system.o ${OBJECTDIR}/traps.o ${OBJECTDIR}/user.o ${OBJECTDIR}/emMalloc.o ${OBJECTDIR}/game/collision.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/Dogm128x64/bitmap/ball.o.d ${OBJECTDIR}/Dogm128x64/BoldFont.o.d ${OBJECTDIR}/Dogm128x64/dogm.o.d ${OBJECTDIR}/Dogm128x64/dogmBuffer.o.d ${OBJECTDIR}/game/game.o.d ${OBJECTDIR}/ioTree/ioTree.o.d ${OBJECTDIR}/configuration_bits.o.d ${OBJECTDIR}/interrupts.o.d ${OBJECTDIR}/main.o.d ${OBJECTDIR}/system.o.d ${OBJECTDIR}/traps.o.d ${OBJECTDIR}/user.o.d ${OBJECTDIR}/emMalloc.o.d ${OBJECTDIR}/game/collision.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/Dogm128x64/bitmap/ball.o ${OBJECTDIR}/Dogm128x64/BoldFont.o ${OBJECTDIR}/Dogm128x64/dogm.o ${OBJECTDIR}/Dogm128x64/dogmBuffer.o ${OBJECTDIR}/game/game.o ${OBJECTDIR}/ioTree/ioTree.o ${OBJECTDIR}/configuration_bits.o ${OBJECTDIR}/interrupts.o ${OBJECTDIR}/main.o ${OBJECTDIR}/system.o ${OBJECTDIR}/traps.o ${OBJECTDIR}/user.o ${OBJECTDIR}/emMalloc.o
+OBJECTFILES=${OBJECTDIR}/Dogm128x64/bitmap/ball.o ${OBJECTDIR}/Dogm128x64/BoldFont.o ${OBJECTDIR}/Dogm128x64/dogm.o ${OBJECTDIR}/Dogm128x64/dogmBuffer.o ${OBJECTDIR}/game/game.o ${OBJECTDIR}/ioTree/ioTree.o ${OBJECTDIR}/configuration_bits.o ${OBJECTDIR}/interrupts.o ${OBJECTDIR}/main.o ${OBJECTDIR}/system.o ${OBJECTDIR}/traps.o ${OBJECTDIR}/user.o ${OBJECTDIR}/emMalloc.o ${OBJECTDIR}/game/collision.o
 
 
 CFLAGS=
@@ -151,6 +151,12 @@ ${OBJECTDIR}/emMalloc.o: emMalloc.c  nbproject/Makefile-${CND_CONF}.mk
 	${MP_CC} $(MP_EXTRA_CC_PRE)  emMalloc.c  -o ${OBJECTDIR}/emMalloc.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/emMalloc.o.d"        -g -D__DEBUG   -omf=elf -D_DEBUG -O0 -I"Dogm128x64" -msmart-io=1 -msfr-warn=off
 	@${FIXDEPS} "${OBJECTDIR}/emMalloc.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
+${OBJECTDIR}/game/collision.o: game/collision.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} ${OBJECTDIR}/game 
+	@${RM} ${OBJECTDIR}/game/collision.o.d 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  game/collision.c  -o ${OBJECTDIR}/game/collision.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/game/collision.o.d"        -g -D__DEBUG   -omf=elf -D_DEBUG -O0 -I"Dogm128x64" -msmart-io=1 -msfr-warn=off
+	@${FIXDEPS} "${OBJECTDIR}/game/collision.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
 else
 ${OBJECTDIR}/Dogm128x64/bitmap/ball.o: Dogm128x64/bitmap/ball.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/Dogm128x64/bitmap 
@@ -229,6 +235,12 @@ ${OBJECTDIR}/emMalloc.o: emMalloc.c  nbproject/Makefile-${CND_CONF}.mk
 	@${RM} ${OBJECTDIR}/emMalloc.o.d 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  emMalloc.c  -o ${OBJECTDIR}/emMalloc.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/emMalloc.o.d"        -g -omf=elf -D_DEBUG -O0 -I"Dogm128x64" -msmart-io=1 -msfr-warn=off
 	@${FIXDEPS} "${OBJECTDIR}/emMalloc.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
+${OBJECTDIR}/game/collision.o: game/collision.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} ${OBJECTDIR}/game 
+	@${RM} ${OBJECTDIR}/game/collision.o.d 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  game/collision.c  -o ${OBJECTDIR}/game/collision.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/game/collision.o.d"        -g -omf=elf -D_DEBUG -O0 -I"Dogm128x64" -msmart-io=1 -msfr-warn=off
+	@${FIXDEPS} "${OBJECTDIR}/game/collision.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 endif
 

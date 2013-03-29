@@ -10,6 +10,7 @@
       </logicalFolder>
       <logicalFolder name="f3" displayName="game" projectFiles="true">
         <itemPath>game/game.h</itemPath>
+        <itemPath>game/collision.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="ioTree" projectFiles="true">
         <itemPath>ioTree/ioTree.h</itemPath>
@@ -46,6 +47,7 @@
       </logicalFolder>
       <logicalFolder name="f3" displayName="game" projectFiles="true">
         <itemPath>game/game.c</itemPath>
+        <itemPath>game/collision.c</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="ioTree" projectFiles="true">
         <itemPath>ioTree/ioTree.c</itemPath>

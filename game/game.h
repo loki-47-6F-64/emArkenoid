@@ -75,7 +75,6 @@ typedef struct Ball {
 
     unsigned char *bitmap;
 } Ball;
-
 Object* allocBrick(int x, int y, int width, int height);
 void freeBrick(Object *brick);
 
@@ -93,15 +92,7 @@ void moveLeft(Object*);
 void moveRight(Object*);
 
 void moveBall(Ball*);
-// Detect collision at point.
-CollPoint* collide(CollPoint *collPoint, unsigned int size);
 
-/* An addition to the binary tree specificly designed to reorder nodes within the binary tree.
- * Because the positions of the points are used as keys, when one point gets moved, the other points get moved as well.
- * For this reason, BinReassign needs to be tailored for collision detection.
- * That is why it is placed in game.c, not ioTree.c */
-struct ioTree;
-void binReassign(struct ioTree* tree, void* currKey, void* newKey);
 
 #endif	/* GAME_H */
 
