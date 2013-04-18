@@ -127,14 +127,14 @@ void binReassign(ioTree* tree, void* currKey, void* newKey) {
 // Check for collision
 // Returns NULL if no collsion detected.
 CollPoint* collide(CollPoint *collPoint, unsigned int size) {
-    CollPoint * collPointBuf[10];
+    CollPoint * collPointBuf[2];
 
     unsigned int x;
     for (x = 0; x < size; x++) {
 
         // If collision
         if (binGetAll(collTree, &collPoint[x], collPointBuf,
-                sizeof (CollPoint),
+                sizeof (CollPoint*),
                 sizeof (collPointBuf) / sizeof (CollPoint*)) > 1) {
             // Return other collisionPoint
             return (collPointBuf[0]->type == collPoint->type) ? collPointBuf[1] : collPointBuf[0];
